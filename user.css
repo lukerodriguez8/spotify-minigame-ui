@@ -1,0 +1,1295 @@
+/* ==========================================================================
+   Terminal // Spicetify theme
+   Spotify as a plain text-mode player: one monospace font, flat black panes
+   with tmux-style borders, reverse-video selection, and ASCII art, plus a
+   game panel in the player bar.
+
+   Colors come from color.ini (schemes: tty, amber, green). theme.js adds the
+   shell prompt, the Home stats, the games, and these
+   classes on <html>:
+     .tty-spotify  look: stock Spotify styling everywhere; only the layout
+                   and the games remain
+     .tty-compact  view: the regular player bar, games hidden
+     .tty-playing  a song is playing
+   ========================================================================== */
+
+@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap");
+
+:root {
+  --tty-font: "JetBrains Mono", "SF Mono", Menlo, Monaco, Consolas, monospace;
+  --tty-line: var(--spice-button);
+  --tty-line-hot: var(--spice-button-active);
+  --tty-rule: rgba(var(--spice-rgb-subtext), 0.4);
+  --tty-hover: rgba(var(--spice-rgb-text), 0.07);
+}
+
+/* ---- Spotify look: stock colors everywhere. ------------------------------ */
+
+html.tty-spotify {
+  --spice-text: #ffffff;
+  --spice-subtext: #b3b3b3;
+  --spice-main: #121212;
+  --spice-main-elevated: #242424;
+  --spice-highlight: #1a1a1a;
+  --spice-highlight-elevated: #2a2a2a;
+  --spice-sidebar: #000000;
+  --spice-player: #181818;
+  --spice-card: #282828;
+  --spice-shadow: #000000;
+  --spice-selected-row: #ffffff;
+  --spice-button: #1db954;
+  --spice-button-active: #1ed760;
+  --spice-button-disabled: #535353;
+  --spice-tab-active: #333333;
+  --spice-notification: #4687d6;
+  --spice-notification-error: #e22134;
+  --spice-misc: #7f7f7f;
+  --spice-rgb-text: 255, 255, 255;
+  --spice-rgb-subtext: 179, 179, 179;
+  --spice-rgb-main: 18, 18, 18;
+  --spice-rgb-main-elevated: 36, 36, 36;
+  --spice-rgb-highlight: 26, 26, 26;
+  --spice-rgb-highlight-elevated: 42, 42, 42;
+  --spice-rgb-sidebar: 0, 0, 0;
+  --spice-rgb-player: 24, 24, 24;
+  --spice-rgb-card: 40, 40, 40;
+  --spice-rgb-shadow: 0, 0, 0;
+  --spice-rgb-selected-row: 255, 255, 255;
+  --spice-rgb-button: 29, 185, 84;
+  --spice-rgb-button-active: 30, 215, 96;
+  --spice-rgb-button-disabled: 83, 83, 83;
+  --spice-rgb-tab-active: 51, 51, 51;
+  --spice-rgb-notification: 70, 135, 214;
+  --spice-rgb-notification-error: 226, 33, 52;
+  --spice-rgb-misc: 127, 127, 127;
+}
+
+html.tty-spotify :is(.tty-prompt, .tty-stats) {
+  display: none !important;
+}
+
+/* ==========================================================================
+   Player bar skin: terminal look only. The layout below applies in both.
+   ========================================================================== */
+
+html:not(.tty-spotify) {
+
+  /* Spotify's own components in the bar read these, so point them at the
+     terminal palette. */
+  .Root__now-playing-bar {
+    --background-base: var(--spice-main);
+    --background-highlight: var(--spice-main-elevated);
+    --background-elevated-base: var(--spice-main-elevated);
+    --text-base: var(--spice-text);
+    --text-subdued: var(--spice-subtext);
+    --text-bright-accent: var(--spice-button-active);
+    --essential-base: var(--spice-text);
+    --essential-subdued: var(--spice-subtext);
+    --essential-bright-accent: var(--spice-button-active);
+    --decorative-subdued: rgba(var(--spice-rgb-button), 0.35);
+    background: var(--spice-main);
+  }
+
+  .Root__now-playing-bar,
+  .Root__now-playing-bar * {
+    font-family: var(--tty-font) !important;
+    border-radius: 0 !important;
+  }
+
+  .main-nowPlayingBar-container {
+    background: var(--spice-main) !important;
+  }
+
+  /* A tmux-style pane: a border with its title on the top edge. */
+  .main-nowPlayingBar-container::after {
+    content: "";
+    position: absolute;
+    inset: 7px 0 0;
+    z-index: 5;
+    pointer-events: none;
+    box-shadow: inset 0 0 0 1px var(--tty-line);
+  }
+
+  .main-nowPlayingBar-container::before {
+    content: "paused";
+    position: absolute;
+    top: 0;
+    left: 14px;
+    z-index: 6;
+    padding: 0 6px;
+    font-size: 11px;
+    line-height: 14px;
+    color: var(--spice-button);
+    background: var(--spice-main);
+    pointer-events: none;
+  }
+
+  &.tty-playing .main-nowPlayingBar-container::before {
+    /* A plain label: an animated one relaid out the whole app on every tick. */
+    content: "playing";
+  }
+
+  .main-trackInfo-name,
+  .main-trackInfo-name * {
+    color: var(--spice-text) !important;
+  }
+
+  .main-trackInfo-artists,
+  .main-trackInfo-artists * {
+    color: var(--spice-subtext) !important;
+  }
+
+  .main-nowPlayingBar-nowPlayingBar :is([data-testid="playback-position"], [data-testid="playback-duration"]) {
+    color: var(--spice-subtext) !important;
+  }
+
+  .player-controls [data-testid="control-button-playpause"] > span {
+    background: transparent !important;
+    color: var(--spice-text) !important;
+    box-shadow: inset 0 0 0 1px var(--tty-line);
+  }
+
+  .player-controls [data-testid="control-button-playpause"]:hover > span {
+    background: var(--spice-button) !important;
+    color: var(--spice-main) !important;
+  }
+
+  .player-controls [data-testid="control-button-playpause"] svg {
+    fill: currentColor !important;
+  }
+
+  .progress-bar {
+    --fg-color: var(--spice-text) !important;
+    --bg-color: var(--tty-rule) !important;
+    --is-active-fg-color: var(--spice-button) !important;
+  }
+}
+
+.main-nowPlayingBar-container {
+  position: relative;
+}
+
+/* The game canvas covers the whole pane; Spotify's controls sit on top. */
+.tty-runner {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.main-nowPlayingBar-nowPlayingBar {
+  position: relative;
+  z-index: 1;
+}
+
+/* ---- Status lines on the pane's top border ------------------------------
+   Right: game / mode / level. Left, after the pane title: look / view, and
+   in the games view Spotify's own controls and the volume. They straddle
+   the border like the pane titles; the active choice is filled. */
+
+.tty-switchbar {
+  position: absolute;
+  top: -2px;
+  z-index: 6;
+  display: flex;
+  gap: 14px;
+  padding: 0 6px;
+  background: var(--spice-main);
+}
+
+.tty-switchbar--games {
+  right: 14px;
+}
+
+.tty-switchbar--settings {
+  left: 96px;
+}
+
+html.tty-compact :is(.tty-switchbar--games, .tty-mode--spotify) {
+  display: none;
+}
+
+/* Spotify's controls are actions, not a choice: a lit one (an open queue)
+   still takes a click to close it. */
+.tty-mode--spotify .tty-mode-option[aria-pressed="true"] {
+  cursor: pointer;
+}
+
+.tty-mode--spotify .tty-mode-option:disabled {
+  cursor: default;
+  opacity: 0.45;
+}
+
+/* Volume: ten cells, lit up to the level. Click or drag to set it, scroll
+   to nudge it, and the "vol" label mutes. */
+.tty-vol-mute {
+  padding: 0;
+  border: 0;
+  font: inherit;
+  color: inherit;
+  background: none;
+  cursor: pointer;
+}
+
+.tty-vol-mute:is(:hover, :focus-visible) {
+  color: var(--spice-button-active);
+}
+
+.tty-vol {
+  gap: 2px;
+  align-items: center;
+  height: 18px;
+  padding: 0 5px;
+  cursor: pointer;
+  touch-action: none;
+}
+
+.tty-vol-cell {
+  width: 5px;
+  height: 10px;
+  background: rgba(var(--spice-rgb-button), 0.2);
+}
+
+.tty-vol-cell.is-on {
+  background: var(--spice-button);
+}
+
+.tty-mode {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  line-height: 18px;
+  color: var(--spice-subtext);
+}
+
+.tty-mode-options {
+  display: flex;
+  box-shadow: inset 0 0 0 1px var(--tty-line);
+}
+
+.tty-mode-option {
+  padding: 0 9px;
+  border: 0;
+  font: inherit;
+  color: var(--spice-button);
+  background: transparent;
+  cursor: pointer;
+}
+
+.tty-mode-option:is(:hover, :focus-visible):not([aria-pressed="true"]):not(:disabled) {
+  color: var(--spice-button-active);
+  background: rgba(var(--spice-rgb-button), 0.14);
+}
+
+.tty-mode-option[aria-pressed="true"] {
+  color: var(--spice-main);
+  background: var(--spice-button);
+  cursor: default;
+}
+
+/* On auto the level follows the song, so its switch is read-only. */
+.tty-mode--disabled .tty-mode-option {
+  cursor: default;
+  opacity: 0.7;
+}
+
+/* Narrow windows: drop the labels, then use short option names. */
+.tty-switchbar--compact .tty-mode-label {
+  display: none;
+}
+
+.tty-switchbar--tight .tty-mode-option {
+  font-size: 0;
+}
+
+.tty-switchbar--tight .tty-mode-option::after {
+  content: attr(data-short);
+  font-size: 11px;
+}
+
+/* ---- Games view: a tall pane with open sky on top, the ground (the progress
+   bar) through the middle, and bigger song controls underneath in one row
+   with the track info and volume. --------------------------------------- */
+
+html:not(.tty-compact) {
+  .main-nowPlayingBar-container,
+  .main-nowPlayingBar-nowPlayingBar {
+    height: 276px !important;
+  }
+
+  /* The two side panes sit centered in the space between the switches on
+     the top border (16px down) and the bottom of the pane. */
+  .main-nowPlayingBar-left,
+  .main-nowPlayingBar-right {
+    align-self: center;
+    margin-top: 16px;
+  }
+
+  /* Keep the last label off the pane's right border. */
+  .main-nowPlayingBar-right {
+    padding-right: 16px;
+  }
+
+  .main-nowPlayingBar-center {
+    align-self: stretch;
+  }
+
+  /* The song controls flank the timeline: shuffle and back on its left, skip
+     and repeat on its right, all on one row near the bottom so the games get
+     the sky above. Play/pause floats over the middle of the timeline. */
+  .player-controls {
+    display: grid !important;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-rows: 1fr auto;
+    grid-template-areas: ". . ." "left bar right";
+    align-items: center;
+    column-gap: 14px;
+    height: 100%;
+    padding-bottom: 22px;
+  }
+
+  .player-controls__buttons {
+    display: contents !important;
+  }
+
+  .player-controls__left {
+    grid-area: left;
+    gap: 10px;
+  }
+
+  .player-controls__right {
+    grid-area: right;
+    gap: 10px;
+  }
+
+  .playback-bar {
+    grid-area: bar;
+    width: 100% !important;
+  }
+
+  .player-controls__buttons [data-testid="control-button-playpause"] {
+    grid-area: bar;
+    justify-self: center;
+    align-self: center;
+    z-index: 3;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(-2px);
+    transition: opacity 0.15s ease;
+  }
+
+  /* Shown while paused, or while you point at the timeline or the button. */
+  &:not(.tty-playing) .player-controls__buttons [data-testid="control-button-playpause"],
+  .player-controls:has(.playback-bar:hover, [data-testid="control-button-playpause"]:hover) [data-testid="control-button-playpause"] {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .player-controls [data-testid="control-button-playpause"] > span {
+    width: 52px !important;
+    height: 52px !important;
+    background: var(--spice-main) !important;
+  }
+
+  .player-controls [data-testid="control-button-playpause"] svg {
+    width: 22px !important;
+    height: 22px !important;
+  }
+
+  /* theme.js draws the playback bar as the game's ground. The real bar stays
+     on top, invisible, so clicking and dragging to seek still work. */
+  .playback-bar .playback-progressbar-container {
+    position: relative;
+  }
+
+  .playback-bar .x-progressBar-progressBarBg,
+  .playback-bar .progress-bar__slider {
+    opacity: 0;
+  }
+
+  /* Left: a pane the same size as the up-next one, with the cover on its
+     left and the song name, artist and add button beside it. */
+  .main-nowPlayingBar-left {
+    display: flex;
+  }
+
+  .main-nowPlayingWidget-nowPlaying {
+    position: relative;
+    display: grid !important;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-areas: "cover info action";
+    container-type: inline-size;
+    align-items: center;
+    column-gap: 16px;
+    box-sizing: border-box;
+    width: var(--tty-side-width, 100%); /* Set by theme.js to match the up-next pane. */
+    max-width: 100%;
+    height: 200px;
+    padding: 10px 16px 10px 10px;
+    background: var(--spice-main);
+    box-shadow: inset 0 0 0 1px var(--tty-line);
+  }
+
+  .main-nowPlayingWidget-nowPlaying::before {
+    content: "now playing";
+    position: absolute;
+    top: -1px;
+    left: 8px;
+    z-index: 2;
+    padding: 0 4px;
+    background: var(--spice-main);
+    color: var(--tty-line);
+    font-size: 11px;
+    line-height: 12px;
+  }
+
+  .main-coverSlotCollapsed-container {
+    grid-area: cover;
+  }
+
+  .main-nowPlayingWidget-trackInfo {
+    grid-area: info;
+    min-width: 0;
+  }
+
+  .main-nowPlayingWidget-actionButtonWrapper {
+    grid-area: action;
+  }
+
+  .main-coverSlotCollapsed-container,
+  .main-coverSlotCollapsed-container > div,
+  [data-testid="cover-drop-target"],
+  [data-testid="cover-art-button"],
+  .main-nowPlayingWidget-coverArt,
+  .main-nowPlayingWidget-coverArt img {
+    /* Shrinks on narrow windows so the song name keeps room. */
+    width: min(180px, 36cqw) !important;
+    height: min(180px, 36cqw) !important;
+  }
+
+  .main-trackInfo-name,
+  .main-trackInfo-name * {
+    font-size: 21px !important;
+    line-height: 28px !important;
+  }
+
+  .main-trackInfo-artists,
+  .main-trackInfo-artists * {
+    font-size: 14px !important;
+    line-height: 20px !important;
+  }
+
+  /* A narrow now-playing pane: smaller song name, so more of it shows. */
+  @container (max-width: 340px) {
+    .main-trackInfo-name,
+    .main-trackInfo-name * {
+      font-size: 16px !important;
+      line-height: 22px !important;
+    }
+
+    .main-trackInfo-artists,
+    .main-trackInfo-artists * {
+      font-size: 12px !important;
+    }
+  }
+
+  /* Right: the up-next pane, matching the one around the cover. Queue,
+     devices, miniplayer, full screen and volume move to the top border
+     (theme.js clicks Spotify's hidden buttons for them), and the lyrics run
+     along the top border instead of Spotify's lyrics view, which is heavy
+     enough to slow the games. Compact view keeps Spotify's own controls. */
+  .main-nowPlayingBar-right {
+    display: flex !important;
+    justify-content: flex-end;
+  }
+
+  .main-nowPlayingBar-extraControls {
+    display: none !important;
+  }
+
+  .tty-queue {
+    display: block;
+  }
+
+  .player-controls__buttons button:not([data-testid="control-button-playpause"]) {
+    min-width: 48px !important;
+    min-height: 48px !important;
+  }
+
+  .player-controls__buttons button:not([data-testid="control-button-playpause"]) svg {
+    width: 24px !important;
+    height: 24px !important;
+  }
+}
+
+/* Compact view: the regular player bar, games hidden, with Spotify's own
+   progress bar back in the accent color. */
+html.tty-compact {
+  .tty-runner {
+    display: none;
+  }
+
+  .playback-bar .progress-bar {
+    --fg-color: var(--spice-button) !important;
+  }
+}
+
+/* ==========================================================================
+   Terminal look: the rest of the app
+   ========================================================================== */
+
+html:not(.tty-spotify) {
+  /* Spotify's color sets still carry a few stock greens and greys. */
+  &.encore-dark-theme,
+  &.encore-dark-theme .encore-base-set {
+    --background-elevated-press: var(--spice-highlight);
+    --background-tinted-base: rgba(var(--spice-rgb-text), 0.08);
+    --background-tinted-highlight: rgba(var(--spice-rgb-text), 0.12);
+    --background-tinted-press: rgba(var(--spice-rgb-text), 0.18);
+    --essential-subdued: var(--spice-subtext);
+    --decorative-subdued: rgba(var(--spice-rgb-button), 0.35);
+  }
+
+  &.encore-dark-theme .encore-bright-accent-set,
+  &.encore-dark-theme .encore-positive-set {
+    --background-base: var(--spice-button);
+    --background-highlight: var(--spice-button-active);
+    --background-press: var(--spice-button);
+    --background-elevated-base: var(--spice-button-active);
+    --background-elevated-highlight: var(--spice-button-active);
+    --background-elevated-press: var(--spice-button);
+    --decorative-subdued: var(--spice-button);
+  }
+
+  /* One font, square corners, flat black. */
+  & body,
+  & body * {
+    font-family: var(--tty-font) !important;
+    border-radius: 0 !important;
+  }
+
+  ::selection {
+    background: var(--spice-text);
+    color: var(--spice-main);
+  }
+
+  & body,
+  .Root__top-container,
+  .Root__globalNav,
+  .main-yourLibraryX-entryPoints,
+  .Root__main-view,
+  .Root__right-sidebar-peek,
+  .main-topBar-background {
+    background: var(--spice-main) !important;
+  }
+
+  /* Drop Spotify's colored page gradients; a terminal has one background. */
+  [data-testid="shortcut-background"],
+  .main-entityHeader-container > [style*="background-color"],
+  .main-entityHeader-container > [style*="background-color"] + div:not(.main-entityHeader-contentWrapper),
+  .main-entityHeader-container ~ [style*="background-color"] {
+    background: none !important;
+  }
+
+  /* Artwork as a green halftone screen: tinted green and shown through a dot
+     grid, like an old monitor. Full color when you point at it. */
+  :is(.Root__main-view, .Root__nav-bar, .Root__right-sidebar) img {
+    filter: grayscale(1) sepia(1) hue-rotate(70deg) saturate(2.2) contrast(1.15);
+    mask-image: radial-gradient(circle closest-side, #000 72%, transparent 78%);
+    mask-size: 4px 4px;
+    transition: filter 0.15s;
+  }
+
+  :is(.Root__main-view, .Root__nav-bar, .Root__right-sidebar) :is(a, button, [role="row"], .main-card-card):hover img {
+    filter: none;
+    mask-image: none;
+  }
+
+  /* Whatever sits behind artwork (some covers have colored backdrops) would
+     show between the dots; keep the gaps dark. */
+  :is(.Root__main-view, .Root__nav-bar, .Root__right-sidebar) :is(:has(> img), .main-cardImage-imageWrapper) {
+    background-color: transparent !important;
+  }
+
+  /* Panes: tmux-style borders with a title on the top edge. */
+  .Root__nav-bar::after,
+  .Root__main-view::after,
+  .Root__right-sidebar-peek::after {
+    content: "";
+    position: absolute;
+    inset: 7px 0 0;
+    z-index: 5;
+    pointer-events: none;
+    box-shadow: inset 0 0 0 1px var(--tty-line);
+  }
+
+  .Root__nav-bar::before,
+  .Root__main-view::before,
+  .Root__right-sidebar-peek::before {
+    position: absolute;
+    top: 0;
+    left: 14px;
+    z-index: 6;
+    padding: 0 6px;
+    font-size: 11px;
+    line-height: 14px;
+    color: var(--spice-button);
+    background: var(--spice-main);
+    pointer-events: none;
+  }
+
+  .Root__nav-bar::before {
+    content: "library";
+  }
+
+  .Root__main-view::before {
+    content: "main";
+  }
+
+  .Root__right-sidebar-peek::before {
+    content: "sidebar";
+  }
+
+  /* Top bar. */
+  .main-globalNav-searchContainer input {
+    background: var(--spice-main) !important;
+    box-shadow: inset 0 0 0 1px var(--tty-line) !important;
+    color: var(--spice-text) !important;
+    caret-color: var(--spice-text);
+  }
+
+  .main-globalNav-searchContainer input:is(:hover, :focus) {
+    box-shadow: inset 0 0 0 1px var(--tty-line-hot) !important;
+  }
+
+  .main-globalNav-searchContainer input::placeholder {
+    color: var(--spice-subtext) !important;
+  }
+
+  .main-globalNav-link-icon,
+  .Root__globalNav [data-testid="user-widget-link"] {
+    background: transparent !important;
+    box-shadow: inset 0 0 0 1px var(--tty-line);
+  }
+
+  .main-globalNav-link-icon:hover,
+  .Root__globalNav [data-testid="user-widget-link"]:hover {
+    box-shadow: inset 0 0 0 1px var(--tty-line-hot);
+  }
+
+  /* Headings. Section titles read like shell comments. */
+  .Root__main-view :is(h1, h2) {
+    letter-spacing: -0.01em;
+  }
+
+  /* Titles in green; section titles are often links inside the heading. */
+  .Root__main-view :is(h1, h2, h1 a, h2 a) {
+    color: var(--spice-button) !important;
+  }
+
+  .Root__main-view h1 {
+    font-size: clamp(28px, 4.2vw, 56px) !important;
+  }
+
+  .Root__main-view h2 > span:first-child::before,
+  .Root__main-view h2:not(:has(> span))::before {
+    content: "# ";
+    color: var(--spice-subtext);
+    font-weight: 400;
+  }
+
+  .main-yourLibraryX-header h1 {
+    color: var(--spice-text) !important;
+  }
+
+  /* Lists: cursor-line hover, reverse-video selection. */
+  .main-rootlist-wrapper [role="row"]:hover,
+  .main-trackList-trackListRow:hover,
+  .main-contextMenu-menuItemButton:is(:hover, :focus) {
+    background: var(--tty-hover) !important;
+  }
+
+  .main-rootlist-wrapper [role="row"][aria-selected="true"],
+  .main-trackList-trackListRow[aria-selected="true"],
+  .main-trackList-selected {
+    background: var(--spice-text) !important;
+  }
+
+  :is(.main-rootlist-wrapper [role="row"][aria-selected="true"], .main-trackList-trackListRow[aria-selected="true"], .main-trackList-selected) * {
+    color: var(--spice-main) !important;
+    fill: var(--spice-main) !important;
+  }
+
+  /* Filter chips: boxed labels, reverse video when active. */
+  .Root__nav-bar [role="option"] span,
+  .Root__main-view button[role="checkbox"] {
+    background: transparent !important;
+    box-shadow: inset 0 0 0 1px var(--tty-line);
+    color: var(--spice-text) !important;
+  }
+
+  .Root__nav-bar [role="option"]:hover span,
+  .Root__main-view button[role="checkbox"]:hover {
+    box-shadow: inset 0 0 0 1px var(--tty-line-hot);
+  }
+
+  .Root__nav-bar [role="option"]:is([aria-selected="true"], [aria-checked="true"]) span,
+  .Root__main-view button[role="checkbox"][aria-checked="true"] {
+    background: var(--spice-text) !important;
+    color: var(--spice-main) !important;
+  }
+
+  /* Cards. */
+  .main-card-card {
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+
+  .main-card-card:is(:hover, :focus-within) {
+    background: var(--tty-hover) !important;
+    box-shadow: inset 0 0 0 1px var(--tty-line) !important;
+  }
+
+  /* Menus and scrollbars. */
+  .main-contextMenu-menu,
+  [data-tippy-root] [role="menu"] {
+    background: var(--spice-main) !important;
+    box-shadow: 0 0 0 1px var(--tty-line) !important;
+  }
+
+  .os-scrollbar-handle,
+  ::-webkit-scrollbar-thumb {
+    background: var(--tty-rule) !important;
+  }
+}
+
+/* ---- Shell prompt in the top bar (theme.js) ------------------------------ */
+
+.tty-prompt {
+  position: fixed;
+  top: 22px;
+  left: 230px;
+  z-index: 3;
+  font-size: 12px;
+  line-height: 20px;
+  white-space: nowrap;
+  color: var(--spice-text);
+  pointer-events: none;
+}
+
+.tty-prompt-user {
+  color: var(--spice-button);
+  font-weight: 700;
+}
+
+.tty-cursor {
+  display: inline-block;
+  width: 0.6em;
+  height: 1.15em;
+  vertical-align: -0.2em;
+  background: var(--spice-text);
+  animation: tty-blink 1.1s steps(1) infinite;
+}
+
+/* ---- Listening stats on Home (theme.js) -----------------------------------
+   One wide, short pane: session, today and this month as big numbers, then
+   the top songs and artists side by side. */
+
+.tty-stats {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(110px, auto)) repeat(2, minmax(0, 1fr));
+  gap: 0 28px;
+  margin: 20px var(--content-spacing, 24px) 32px; /* Room before Spotify's shelves. */
+  padding: 16px 20px 12px;
+  box-shadow: inset 0 0 0 1px var(--tty-line);
+  font-size: 13px;
+  line-height: 20px;
+  color: var(--spice-text);
+}
+
+.tty-stats::before {
+  content: "stats";
+  position: absolute;
+  top: -7px;
+  left: 10px;
+  padding: 0 5px;
+  background: var(--spice-main);
+  color: var(--tty-line);
+  font-size: 11px;
+  line-height: 14px;
+}
+
+.tty-stats-label {
+  margin-bottom: 4px;
+  color: var(--spice-button);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: lowercase;
+}
+
+.tty-stats-value {
+  font-size: 26px;
+  line-height: 32px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.tty-stats-note {
+  color: var(--spice-subtext);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.tty-stats-list {
+  min-width: 0;
+  padding-left: 20px;
+  box-shadow: inset 1px 0 0 var(--tty-rule);
+}
+
+.tty-stats-list ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tty-stats-list li {
+  display: flex;
+  gap: 10px;
+  min-width: 0;
+  white-space: nowrap;
+}
+
+.tty-stats-num {
+  flex: none;
+  color: var(--spice-subtext);
+  opacity: 0.6;
+}
+
+.tty-stats-name {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tty-stats-by {
+  flex: 1 1 0;
+  min-width: 30px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--spice-subtext);
+}
+
+.tty-stats-count {
+  flex: none;
+  margin-left: auto;
+  color: var(--spice-button);
+}
+
+.tty-stats-empty {
+  color: var(--spice-subtext);
+}
+
+/* Narrower main view: the numbers on one row, the lists under them. */
+@media (max-width: 1400px) {
+  .tty-stats {
+    grid-template-columns: repeat(3, minmax(0, auto)) 1fr;
+    row-gap: 14px;
+  }
+
+  .tty-stats-list {
+    grid-column: 1 / -1;
+    padding-left: 0;
+    box-shadow: none;
+  }
+}
+
+/* ---- Motion ---------------------------------------------------------------- */
+
+@keyframes tty-blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+
+@media (prefers-reduced-motion: reduce) {
+  .tty-cursor,
+  html.tty-playing .main-nowPlayingBar-container::before {
+    animation: none !important;
+  }
+}
+
+/* ---- Terminal labels for the player controls ------------------------------
+   Spotify's icons are swapped for bracketed text, like a TUI's buttons.
+   Colors still follow each button's state (shuffle and repeat go green when
+   on). Play/pause follows .tty-playing so it's right in any language. */
+
+html:not(.tty-spotify) {
+
+  .Root__now-playing-bar {
+    :is(
+      .player-controls__left button,
+      .player-controls__right button,
+      [data-testid="control-button-playpause"],
+      .main-nowPlayingBar-extraControls button
+    ) svg {
+      display: none !important;
+    }
+
+    :is(
+      .player-controls__left button,
+      .player-controls__right button,
+      [data-testid="control-button-playpause"],
+      .main-nowPlayingBar-extraControls button
+    ) span:has(> svg)::before {
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 1;
+      white-space: nowrap;
+      letter-spacing: 0.02em;
+    }
+
+    [data-testid="control-button-skip-back"] span:has(> svg)::before { content: "[<<]"; }
+    [data-testid="control-button-skip-forward"] span:has(> svg)::before { content: "[>>]"; }
+    .player-controls__left button:first-child span:has(> svg)::before { content: "[shuf]"; }
+    [data-testid="control-button-repeat"] span:has(> svg)::before { content: "[rep]"; }
+    [data-testid="control-button-repeat"][aria-label="Disable repeat"] span:has(> svg)::before { content: "[rep1]"; }
+    [data-testid="control-button-playpause"] span:has(> svg)::before { content: ">"; }
+    [data-testid="lyrics-button"] span:has(> svg)::before { content: "[lyrics]"; }
+    [data-testid="control-button-queue"] span:has(> svg)::before { content: "[queue]"; }
+    button[aria-label*="evice"] span:has(> svg)::before { content: "[dev]"; }
+    [data-testid="volume-bar-toggle-mute-button"] span:has(> svg)::before { content: "[vol]"; }
+    [data-testid="volume-bar-toggle-mute-button"][aria-label="Unmute"] span:has(> svg)::before { content: "[mute]"; }
+    [data-testid="pip-toggle-button"] span:has(> svg)::before { content: "[mini]"; }
+    [data-testid="fullscreen-mode-button"] span:has(> svg)::before { content: "[full]"; }
+
+    /* The icon slots were sized for square glyphs; let the labels breathe. */
+    :is(.player-controls__left, .player-controls__right, .main-nowPlayingBar-extraControls) button {
+      width: auto !important;
+      padding-inline: 4px !important;
+    }
+
+    :is(.player-controls__left, .player-controls__right, .main-nowPlayingBar-extraControls) button span:has(> svg) {
+      width: auto !important;
+      height: auto !important;
+    }
+  }
+
+  &.tty-playing .Root__now-playing-bar [data-testid="control-button-playpause"] span:has(> svg)::before {
+    content: "||";
+  }
+
+  /* Bigger labels in the games view, where the controls have room. */
+  &:not(.tty-compact) .Root__now-playing-bar {
+    :is(
+      .player-controls__left button,
+      .player-controls__right button,
+      .main-nowPlayingBar-extraControls button
+    ) span:has(> svg)::before {
+      font-size: 15px;
+    }
+
+    [data-testid="control-button-playpause"] span:has(> svg)::before {
+      font-size: 20px;
+    }
+  }
+}
+
+/* ==========================================================================
+   Lyrics: one line at a time on the top border, between the volume and the
+   game switches. Games view only.
+   ========================================================================== */
+.tty-lyricbar {
+  position: absolute;
+  top: -2px;
+  z-index: 6;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.tty-lyricbar[hidden],
+html.tty-compact .tty-lyricbar {
+  display: none;
+}
+
+.tty-lyricbar-text {
+  max-width: 100%;
+  padding: 0 8px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  background: var(--spice-main);
+  color: var(--spice-text);
+  font-family: var(--tty-font);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 18px;
+}
+
+.tty-lyricbar-text[data-kind="note"] {
+  color: var(--spice-subtext);
+  font-weight: 400;
+  font-size: 12px;
+}
+
+.tty-lyricbar-text.is-new {
+  animation: tty-lyric-in 0.25s ease;
+}
+
+@keyframes tty-lyric-in {
+  from {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+}
+
+/* ==========================================================================
+   Up next: a tmux-style pane on the right, the size of the one around the
+   cover. Games view only.
+   ========================================================================== */
+.tty-queue {
+  display: none;
+  position: relative;
+  box-sizing: border-box;
+  width: var(--tty-side-width, 100%); /* Set by theme.js to match the now-playing pane. */
+  max-width: 100%;
+  height: 200px;
+  flex: none;
+  overflow: hidden;
+  background: var(--spice-main);
+  box-shadow: inset 0 0 0 1px var(--tty-line);
+  font-family: var(--tty-font);
+  z-index: 1;
+}
+
+.tty-queue::before {
+  content: "up next";
+  position: absolute;
+  top: -1px;
+  left: 8px;
+  z-index: 2;
+  padding: 0 4px;
+  background: var(--spice-main);
+  color: var(--tty-line);
+  font-size: 11px;
+  line-height: 12px;
+}
+
+/* The list fades out at the bottom border. */
+.tty-queue::after {
+  content: "";
+  position: absolute;
+  inset: auto 1px 1px;
+  height: 40px;
+  pointer-events: none;
+  background: linear-gradient(transparent, var(--spice-main));
+}
+
+.tty-queue-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 18px 10px 0 8px;
+  list-style: none;
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.tty-queue-play {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+  min-width: 0;
+  padding: 2px 6px;
+  border: 0;
+  font: inherit;
+  text-align: left;
+  line-height: 20px;
+  white-space: nowrap;
+  background: transparent;
+  cursor: pointer;
+}
+
+/* Hovering a song: its row lights up and its number turns into a play mark. */
+.tty-queue-play:is(:hover, :focus-visible) {
+  background: rgba(var(--spice-rgb-button), 0.14);
+}
+
+.tty-queue-play:is(:hover, :focus-visible) .tty-queue-num {
+  font-size: 0;
+}
+
+.tty-queue-play:is(:hover, :focus-visible) .tty-queue-num::before {
+  content: ">";
+  display: inline-block;
+  width: 2ch;
+  font-size: 14px;
+  line-height: 20px;
+  vertical-align: top;
+  color: var(--tty-line);
+  opacity: 1;
+}
+
+.tty-queue-num {
+  flex: none;
+  color: var(--spice-subtext);
+  opacity: 0.6;
+}
+
+.tty-queue-row.is-queued .tty-queue-num {
+  color: var(--tty-line);
+  opacity: 1;
+}
+
+.tty-queue-title {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--spice-text);
+}
+
+.tty-queue-artist {
+  flex: 1 1 0;
+  min-width: 40px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--spice-subtext);
+}
+
+.tty-queue-note {
+  padding-top: 64px;
+  text-align: center;
+  color: var(--spice-subtext);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tty-lyricbar-text.is-new {
+    animation: none;
+  }
+}
+
+/* ==========================================================================
+   Spotify look: the pieces the theme adds, dressed like Spotify's own. No
+   borders or monospace; pill switches, dark rounded cards, Spotify's font.
+   ========================================================================== */
+
+html.tty-spotify {
+  :is(.tty-switchbar, .tty-lyricbar) {
+    top: 8px;
+    background: transparent;
+    font-family: inherit;
+  }
+
+  .tty-mode {
+    font-size: 12px;
+    color: var(--text-subdued, #b3b3b3);
+  }
+
+  .tty-mode-options {
+    gap: 4px;
+    box-shadow: none;
+  }
+
+  .tty-mode-option {
+    padding: 0 10px;
+    border-radius: 9999px;
+    color: var(--text-base, #fff);
+    background: rgba(255, 255, 255, 0.07);
+  }
+
+  .tty-mode-option:is(:hover, :focus-visible):not([aria-pressed="true"]):not(:disabled) {
+    color: var(--text-base, #fff);
+    background: rgba(255, 255, 255, 0.14);
+  }
+
+  .tty-mode-option[aria-pressed="true"] {
+    color: #000;
+    background: #fff;
+  }
+
+  .tty-vol {
+    background: transparent;
+  }
+
+  .tty-vol-cell {
+    border-radius: 1px;
+    background: rgba(255, 255, 255, 0.3);
+  }
+
+  .tty-vol-cell.is-on {
+    background: #fff;
+  }
+
+  .tty-lyricbar-text {
+    background: transparent;
+    font-family: inherit;
+    color: var(--text-base, #fff);
+  }
+
+  .main-nowPlayingWidget-nowPlaying,
+  .tty-queue {
+    border-radius: 8px;
+    box-shadow: none;
+    background: var(--background-elevated-base, #1f1f1f);
+  }
+
+  .main-nowPlayingWidget-nowPlaying::before {
+    content: none;
+  }
+
+  .tty-queue {
+    font-family: inherit;
+  }
+
+  .tty-queue::before {
+    content: "Next up";
+    position: static;
+    display: block;
+    padding: 12px 16px 2px;
+    background: transparent;
+    color: var(--text-base, #fff);
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 20px;
+  }
+
+  .tty-queue::after {
+    background: linear-gradient(transparent, var(--background-elevated-base, #1f1f1f));
+  }
+
+  .tty-queue-list {
+    padding-top: 4px;
+  }
+
+  .tty-queue-play {
+    border-radius: 4px;
+  }
+
+  .tty-queue-play:is(:hover, :focus-visible) {
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  .tty-queue-play:is(:hover, :focus-visible) .tty-queue-num::before {
+    content: "\25B6";
+    color: var(--text-base, #fff);
+  }
+
+  .tty-queue-row.is-queued .tty-queue-num {
+    color: var(--text-bright-accent, #1ed760);
+  }
+
+  /* Spotify's white round play button, floating over the timeline. */
+  .player-controls [data-testid="control-button-playpause"] > span {
+    color: #000 !important;
+    background: #fff !important;
+    border-radius: 50% !important;
+  }
+}

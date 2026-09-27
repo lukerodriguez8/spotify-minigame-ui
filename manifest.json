@@ -1,0 +1,11 @@
+{
+  "name": "Minigame UI",
+  "description": "The player bar becomes a beat-synced arcade: the Chrome dino, flappy and a shooter, plus lyrics, up next and listening stats. Terminal look or Spotify's own.",
+  "preview": "preview.png",
+  "readme": "README.md",
+  "usercss": "user.css",
+  "schemes": "color.ini",
+  "include": ["https://raw.githubusercontent.com/lukerodriguez8/spotify-minigame-ui/main/theme.js"],
+  "authors": [{ "name": "lukerodriguez8", "url": "https://github.com/lukerodriguez8" }],
+  "tags": ["games", "terminal", "lyrics", "beat sync"]
+}
