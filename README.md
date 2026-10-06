@@ -68,7 +68,8 @@ Color schemes: `tty` (default), `amber` and `green`. Switch with `spicetify conf
 - **Where the switches are:** the controls sit on the player bar's top border: game, mode, level, look and view.
 - **When the beat data is missing:** beat sync and lyrics come from Spotify's own client endpoints. Songs without analysis, and podcasts or local files, play the games without beat sync.
 - **How stats are counted:** the theme keeps the stats itself, in local storage, from the day you install it. A play counts after 30 seconds of listening. Only listening in this Spotify app is counted.
-- **What it's tested on:** Spotify 1.3.0 with Spicetify 2.45 on macOS. A Spotify update can move things around; if the theme disappears after one, run `spicetify backup apply`.
+- **What it's tested on:** Spotify 1.3.3 with Spicetify 2.45.3 on macOS.
+- **After a Spotify update:** Spotify updates wipe Spicetify's changes. Run `spicetify upgrade`, then `spicetify apply`, and the theme comes back. New Spotify versions often need the newer Spicetify.
 
 ## Credits
 
